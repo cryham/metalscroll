@@ -33,7 +33,8 @@ Link to original issue/topic [here](https://code.google.com/archive/p/metalscrol
 
 ### Screenshot
 
-Shows all marks, Options dialog and code preview area.
+Shows all marks, Options dialog and code preview area.  
+My theme for both VS and MetalScroll (also for ProgressiveScroll for VS 2010 and more) can be found on [My Website](https://cryham.tuxfamily.org/themes).
 
 ![](https://raw.githubusercontent.com/cryham/metalscroll/master/screens/vs_met_scr.PNG)
 
