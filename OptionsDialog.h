@@ -36,25 +36,13 @@ private:
 
 	static INT_PTR CALLBACK		DlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
-	ColorChip					m_whiteSpace;
-	ColorChip					m_comments;
-	ColorChip					m_uppercase;
-	ColorChip					m_otherChars;
-	ColorChip					m_matchingWord;
-	ColorChip					m_modifLineSaved;
-	ColorChip					m_modifLineUnsaved;
-	ColorChip					m_cursorColor;
-	ColorChip					m_breakpoints;
-	ColorChip					m_bookmarks;
-	ColorChip					m_previewBg;
-	ColorChip					m_previewFg;
-	unsigned int				m_cursorTrans;
-	unsigned int				m_barWidth;
-	unsigned int				m_requireALT;
-	unsigned int				m_caseSensitive;
-	unsigned int				m_wholeWordOnly;
-	unsigned int				m_codePreviewWidth;
-	unsigned int				m_codePreviewHeight;
+	ColorChip		m_whiteSpace, m_comments, m_uppercase, m_otherChars,
+					m_matchingWord, m_modifLineSaved, m_modifLineUnsaved,
+					m_cursorColor, m_cursorFrame, m_breakpoints, m_bookmarks, m_bookmarks2, m_previewBg,
+					m_keyword, m_operators, m_numbers, m_strings, m_preproc;
+	unsigned int	m_cursorTrans, m_barWidth, m_topSplit, m_bookmSize, m_FindSize, m_FindSize2,
+					m_requireALT, m_findCase, m_findWhole,
+					m_PrvWidth, m_PrvHeight, m_PrvFontSize;
 
 	void						InitDialog(HWND hwnd);
 	int							GetInt(HWND hwnd, int dlgItem, int defVal);

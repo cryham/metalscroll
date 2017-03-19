@@ -47,6 +47,7 @@ struct LineInfo
 typedef std::vector<LineInfo>	LineList;
 typedef std::vector<Highlight>	HighlightList;
 
+
 void ProcessLineMarkers(IVsTextLines* buffer, int type, const MarkerOperator& op)
 {
 	long numLines;
@@ -470,6 +471,9 @@ int RenderText(RenderOperator& renderOp, IVsTextView* view, IVsTextLines* buffer
 
 			if(inKeyword)
 				textFlags |= TextFlag_Keyword;
+			if(inString)  //new
+				textFlags |= TextFlag_String;
+			//TextFlag_Preproc  ...
 
 			// Advance the highlight interval, if needed.
 			while(crHighlight && (realColumn >= (int)crHighlight->end))

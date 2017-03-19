@@ -24,9 +24,21 @@
 #define IDC_PREVIEW_WIDTH               215
 #define IDC_PREVIEW_HEIGHT              216
 #define IDC_PREVIEW_BG                  217
-#define IDC_PREVIEW_FG                  218
-#define IDC_CASE_SENSITIVE              219
-#define IDC_WHOLE_WORD_ONLY             220
+#define IDC_KEYWORD                     218
+#define IDC_FINDCASE                    219
+#define IDC_FINDWHOLE                   220
+#define IDC_PREVIEWFONT                 221
+#define IDC_OPERATORS                   222
+#define IDC_NUMBERS                     223
+#define IDC_BOOKMARKS2                  224
+#define IDC_STRINGS                     225
+#define IDC_PREPROC                     226
+#define IDC_BOOKMSIZE                   227
+#define IDC_FINDHEIGHT                  228
+#define IDC_CURSORFRAME                 229
+#define IDC_FINDHEIGHT2                 230
+#define IDC_CURSOR_TRANS2               231
+#define IDC_SPLITTERH                   231
 
 // Next default values for new objects
 // 
@@ -34,7 +46,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        202
 #define _APS_NEXT_COMMAND_VALUE         32768
-#define _APS_NEXT_CONTROL_VALUE         215
+#define _APS_NEXT_CONTROL_VALUE         221
 #define _APS_NEXT_SYMED_VALUE           106
 #endif
 #endif

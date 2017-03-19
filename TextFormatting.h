@@ -38,7 +38,9 @@ enum TextFlags
 {
 	TextFlag_Comment			= 0x01,
 	TextFlag_Highlight			= 0x02,
-	TextFlag_Keyword			= 0x04
+	TextFlag_Keyword	= 0x04,
+	TextFlag_String		= 0x08,
+	TextFlag_Preproc	= 0x10 //
 };
 
 struct RenderOperator
