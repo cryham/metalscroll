@@ -62,8 +62,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,11,83
- PRODUCTVERSION 1,0,11,83
+ FILEVERSION 1,0,12,00
+ PRODUCTVERSION 1,0,12,00
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -80,12 +80,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Griffin Software"
             VALUE "FileDescription", "MetalScroll Add-in"
-            VALUE "FileVersion", "1, 0, 11, 83"
+            VALUE "FileVersion", "1, 0, 12, 00"
             VALUE "InternalName", "MetalScroll.dll"
-            VALUE "LegalCopyright", "(c) 2009 Griffin Software"
+            VALUE "LegalCopyright", "(c) 2011 Griffin Software"
             VALUE "OriginalFilename", "MetalScroll.dll"
             VALUE "ProductName", "MetalScroll"
-            VALUE "ProductVersion", "1, 0, 11, 83"
+            VALUE "ProductVersion", "1, 0, 12, 00"
         END
     END
     BLOCK "VarFileInfo"
@@ -109,50 +109,73 @@ IDR_EDITCMDFILTER       REGISTRY                "EditCmdFilter.rgs"
 // Dialog
 //
 
-IDD_OPTIONS DIALOGEX 0, 0, 275, 188
+IDD_OPTIONS DIALOGEX 0, 0, 275, 252
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "MetalScroll Options"
+CAPTION "MetalScroll Options - CrystaL Hammer mod"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    EDITTEXT        IDC_BAR_WIDTH,101,103,29,14,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_CURSOR_TRANS,239,103,29,14,ES_AUTOHSCROLL | ES_NUMBER
-    DEFPUSHBUTTON   "OK",IDOK,7,167,50,14
-    PUSHBUTTON      "&Reset",IDC_RESET,112,167,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,218,167,50,14
-    CONTROL         "Custom1",IDC_WHITESPACE,"MetalScrollChip",0x0,101,7,29,14
-    CONTROL         "Custom1",IDC_COMMENTS,"MetalScrollChip",0x0,101,23,29,14
-    CONTROL         "Custom1",IDC_UPPERCASE,"MetalScrollChip",0x0,101,39,29,14
-    CONTROL         "Custom1",IDC_CHARACTERS,"MetalScrollChip",0x0,101,55,29,14
-    CONTROL         "Custom1",IDC_MATCHING_WORD,"MetalScrollChip",0x0,239,7,29,14
-    CONTROL         "Custom1",IDC_MODIF_LINE_SAVED,"MetalScrollChip",0x0,239,23,29,14
-    CONTROL         "Custom1",IDC_MODIF_LINE_UNSAVED,"MetalScrollChip",0x0,239,39,29,14
-    CONTROL         "Custom1",IDC_CURSOR_COLOR,"MetalScrollChip",0x0,239,55,29,14
-    LTEXT           "Bar Width",IDC_STATIC,7,104,32,8
-    LTEXT           "Uppercase Letters",IDC_STATIC,7,42,60,8
-    LTEXT           "Comments",IDC_STATIC,7,26,34,8
-    LTEXT           "Other Characters",IDC_STATIC,7,58,57,8
-    LTEXT           "Whitespace",IDC_STATIC,7,10,38,8
-    LTEXT           "Matching Word",IDC_STATIC,150,10,49,8
-    LTEXT           "Modified Line - Saved",IDC_STATIC,150,26,69,8
-    LTEXT           "Modified Line - Unsaved",IDC_STATIC,150,42,77,8
-    LTEXT           "Cursor Color",IDC_STATIC,150,58,41,8
-    LTEXT           "Cursor Transparency",IDC_STATIC,150,104,68,8
-    CONTROL         "Custom1",IDC_BREAKPOINTS,"MetalScrollChip",0x0,101,71,29,14
-    CONTROL         "Custom1",IDC_BOOKMARKS,"MetalScrollChip",0x0,239,71,29,14
-    LTEXT           "Breakpoints",IDC_STATIC,7,74,38,8
-    LTEXT           "Bookmarks",IDC_STATIC,150,74,35,8
-    CONTROL         "Require ALT for double click highlighting",IDC_REQUIRE_ALT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,138,142,10
-    EDITTEXT        IDC_PREVIEW_WIDTH,101,120,29,14,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_PREVIEW_HEIGHT,239,120,29,14,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "Preview Width (characters)",IDC_STATIC,7,121,88,8
-    LTEXT           "Preview Height (lines)",IDC_STATIC,150,121,70,8
-    CONTROL         "Custom1",IDC_PREVIEW_BG,"MetalScrollChip",0x0,101,87,29,14
-    CONTROL         "Custom1",IDC_PREVIEW_FG,"MetalScrollChip",0x0,239,87,29,14
-    LTEXT           "Preview Background",IDC_STATIC,7,90,66,8
-    LTEXT           "Preview Text",IDC_STATIC,150,90,43,8
-    CONTROL         "Case Sensitive",IDC_CASE_SENSITIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,153,63,10
-    CONTROL         "Whole Word",IDC_WHOLE_WORD_ONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,149,152,65,11
+    EDITTEXT        IDC_BAR_WIDTH,239,16,29,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_CURSOR_TRANS,239,74,29,14,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,156,231,50,14
+    PUSHBUTTON      "Reset",IDC_RESET,7,231,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,218,231,50,14
+    CONTROL         "Custom1",IDC_WHITESPACE,"MetalScrollChip",0x0,56,18,29,14
+    CONTROL         "Custom1",IDC_COMMENTS,"MetalScrollChip",0x0,56,34,29,14
+    CONTROL         "Custom1",IDC_UPPERCASE,"MetalScrollChip",0x0,56,53,29,14
+    CONTROL         "Custom1",IDC_CHARACTERS,"MetalScrollChip",0x0,56,69,29,14
+    CONTROL         "Custom1",IDC_MATCHING_WORD,"MetalScrollChip",0x0,152,72,29,14
+    CONTROL         "Custom1",IDC_MODIF_LINE_SAVED,"MetalScrollChip",0x0,152,17,29,14
+    CONTROL         "Custom1",IDC_MODIF_LINE_UNSAVED,"MetalScrollChip",0x0,152,33,29,14
+    CONTROL         "Custom1",IDC_CURSOR_COLOR,"MetalScrollChip",0x0,239,39,29,14
+    LTEXT           "Bar Width",IDC_STATIC,202,17,32,8
+    LTEXT           "Uppercase",IDC_STATIC,7,56,35,8
+    LTEXT           "Comments",IDC_STATIC,7,37,34,8
+    LTEXT           "Lowercase",IDC_STATIC,7,72,35,8
+    LTEXT           "Whitespace",IDC_STATIC,7,21,38,8
+    LTEXT           "Find match",IDC_STATIC,103,75,36,8
+    LTEXT           "Line Saved",IDC_STATIC,103,20,36,8
+    LTEXT           "Line Unsaved",IDC_STATIC,103,36,44,8
+    LTEXT           "Cursor",IDC_STATIC,202,42,22,8
+    LTEXT           "Alpha",IDC_STATIC,202,76,19,8
+    CONTROL         "Custom1",IDC_BREAKPOINTS,"MetalScrollChip",0x0,152,52,29,14
+    CONTROL         "Custom1",IDC_BOOKMARKS,"MetalScrollChip",0x0,152,110,29,14
+    LTEXT           "Breakpoints",IDC_STATIC,103,55,38,8
+    LTEXT           "Bookmarks",IDC_STATIC,103,113,35,8
+    CONTROL         "Alt dbl LMB",IDC_REQUIRE_ALT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,184,173,51,10
+    EDITTEXT        IDC_PREVIEW_WIDTH,102,192,29,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_PREVIEW_HEIGHT,102,209,29,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Width",IDC_STATIC,75,195,20,8
+    LTEXT           "Height",IDC_STATIC,75,212,22,8
+    CONTROL         "Custom1",IDC_PREVIEW_BG,"MetalScrollChip",0x0,37,192,29,14
+    CONTROL         "Custom1",IDC_KEYWORD,"MetalScrollChip",0x0,56,157,29,14
+    LTEXT           "Backgr",IDC_STATIC,10,193,22,8
+    LTEXT           "Keyword",IDC_STATIC,8,160,29,8
+    CONTROL         "&Case sensitifive",IDC_FINDCASE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,184,194,66,10
+    LTEXT           "Code",IDC_STATIC,42,7,18,8
+    LTEXT           "Preview (MMB)",IDC_STATIC,53,179,48,8
+    LTEXT           "Markers",IDC_STATIC,123,7,26,8
+    CONTROL         "&Whole words",IDC_FINDWHOLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,184,209,57,10
+    CONTROL         "Custom1",IDC_OPERATORS,"MetalScrollChip",0x0,56,89,29,14
+    LTEXT           "Operators",IDC_STATIC,7,92,34,8
+    CONTROL         "Custom1",IDC_NUMBERS,"MetalScrollChip",0x0,56,105,29,14
+    LTEXT           "Numbers",IDC_STATIC,7,108,29,8
+    CONTROL         "Custom1",IDC_BOOKMARKS2,"MetalScrollChip",0x0,152,126,29,14
+    LTEXT           "Bookm dark",IDC_STATIC,103,129,38,8
+    EDITTEXT        IDC_PREVIEWFONT,38,209,29,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Font*",IDC_STATIC,11,212,20,8
+    CONTROL         "Custom1",IDC_STRINGS,"MetalScrollChip",0x0,56,121,29,14
+    LTEXT           "Strings",IDC_STATIC,8,124,23,8
+    CONTROL         "Custom1",IDC_PREPROC,"MetalScrollChip",0x0,56,141,29,14
+    LTEXT           "Preproc",IDC_STATIC,8,144,26,8
+    EDITTEXT        IDC_BOOKMSIZE,152,143,29,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Size",IDC_STATIC,126,146,14,8
+    EDITTEXT        IDC_FINDHEIGHT,152,89,13,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Height",IDC_STATIC,116,92,22,8
+    CONTROL         "Custom1",IDC_CURSORFRAME,"MetalScrollChip",0x0,239,56,29,14
+    LTEXT           "Frame",IDC_STATIC,202,59,21,8
+    EDITTEXT        IDC_FINDHEIGHT2,170,89,13,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_SPLITTERH,239,98,29,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "SplitterH",IDC_STATIC,202,100,28,8
 END
 
 
@@ -169,7 +192,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 268
         TOPMARGIN, 7
-        BOTTOMMARGIN, 181
+        BOTTOMMARGIN, 245
     END
 END
 #endif    // APSTUDIO_INVOKED
