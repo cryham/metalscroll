@@ -17,6 +17,10 @@
 #pragma once
 
 class CEditCmdFilter;
+#define  BOOKM_LEVELS  4
+#define  MARG_L  5
+#define  MARG_R  8
+
 
 class MetalBar
 {
@@ -43,24 +47,16 @@ public:
 	static void						SaveSettings();
 
 	// User-controllable parameters.
-	static unsigned int				s_barWidth;
-	static unsigned int				s_whitespaceColor;
-	static unsigned int				s_upperCaseColor;
-	static unsigned int				s_characterColor;
-	static unsigned int				s_commentColor;
-	static unsigned int				s_cursorColor;
-	static unsigned int				s_matchColor;
-	static unsigned int				s_modifiedLineColor;
-	static unsigned int				s_unsavedLineColor;
-	static unsigned int				s_breakpointColor;
-	static unsigned int				s_bookmarkColor;
-	static unsigned int				s_requireAltForHighlight;
-	static unsigned int				s_caseSensitive;
-	static unsigned int				s_wholeWordOnly;
-	static unsigned int				s_codePreviewBg;
-	static unsigned int				s_codePreviewFg;
-	static unsigned int				s_codePreviewWidth;
-	static unsigned int				s_codePreviewHeight;
+	static unsigned int
+		s_barWidth, s_whitespaceColor, s_upperCaseColor, s_characterColor,
+		s_numberColor, s_operatorColor, s_stringColor, s_preprocColor,
+		s_commentColor, s_cursorColor, s_frameColor,
+		s_matchColor, s_modifiedLineColor, s_unsavedLineColor,
+		s_breakpointColor, s_bookmarkColor, s_bookmarkDarkColor, s_bookmarkSize, s_bookmarkClrT[BOOKM_LEVELS],
+		s_requireAlt, s_bFindCase, s_bFindWhole, s_FindSize, s_FindSize2,
+		s_codePreviewBg, s_keywordColor, s_PrvWidth, s_PrvHeight,
+		s_PrvFontSize, s_topSplit;
+	static void UpdBookmClrT();
 
 private:
 	static std::set<MetalBar*>		s_bars;
@@ -110,7 +106,7 @@ private:
 	void							HighlightMatchingWords();
 	void							RemoveWordHighlight(IVsTextLines* buffer);
 
-	void							PaintLineFlags(unsigned int* img, int line, int imgHeight, unsigned int flags);
+	void							PaintLineFlags(unsigned int* img, int line, int imgHeight, unsigned int flags, int bookmlev);
 	void							RefreshCodeImg(int barHeight);
 
 	LRESULT							WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
