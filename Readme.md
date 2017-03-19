@@ -10,8 +10,6 @@ For more info and full Features list refer to:
 See building.txt  
 Needs Visual Studio 2008 SP1 SDK [Download](https://www.microsoft.com/en-us/download/details.aspx?id=21827).
 
-- Visual Studio 2010 SP1 SDK [Download](https://www.microsoft.com/en-us/download/details.aspx?id=21835)
-
 ## Crystal Hammer's modifications
 
 Link to original issue/topic [here](https://code.google.com/archive/p/metalscroll/issues/9).
@@ -32,3 +30,13 @@ Link to original issue/topic [here](https://code.google.com/archive/p/metalscrol
   * This can be seen on the second screen with 14k lines of code.
 * Added option SplitterH for masking the dirty area, seems working.
 * Added font size for preview, it changes after restarting. Resigned from bold fonts which consumed one char when longer.
+
+### Screenshot
+
+Shows all marks, Options dialog and code preview area.
+
+![](https://raw.githubusercontent.com/cryham/metalscroll/master/screens/vs_met_scr.PNG)
+
+Scroll view for 14k lines source file.
+
+![](https://raw.githubusercontent.com/cryham/metalscroll/master/screens/vs_14k_lines.png)
