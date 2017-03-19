@@ -41,11 +41,16 @@ private:
 
 	enum FormatType
 	{
-		FormatType_Plain,
-		FormatType_Keyword,
-		FormatType_Comment,
-		FormatType_Highlight,
-		FormatType_EOL
+		FT_match,  //Highlight
+		FT_comment,
+		FT_keyword,
+		FT_string,
+		FT_preproc,
+		FT_upperCase,
+		FT_character,
+		FT_number,
+		FT_operator,
+		FT_EOL
 	};
 
 	struct CharInfo

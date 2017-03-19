@@ -92,16 +92,18 @@ void CodePreview::Register()
 	wndClass.lpszClassName = s_className;
 	RegisterClassA(&wndClass);
 
-	s_normalFont = CreateFontA(-11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, FIXED_PITCH|FF_DONTCARE, 0);
-	s_boldFont = CreateFontA(-11, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, NONANTIALIASED_QUALITY, FIXED_PITCH|FF_DONTCARE, 0);
+	s_normalFont = CreateFontA(	-MetalBar::s_PrvFontSize/*-13*/, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FIXED_PITCH|FF_DONTCARE, "Lucida Console");
+	//s_boldFont = CreateFontA(	-12, 0, 0, 0, FW_BOLD,	 FALSE, FALSE, FALSE, ANSI_CHARSET,
+	//	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FIXED_PITCH |FF_DONTCARE, "Lucida Console");
 
 	HDC memDC = CreateCompatibleDC(0);
 	SelectObject(memDC, s_normalFont);
 	TEXTMETRIC metrics;
 	GetTextMetrics(memDC, &metrics);
 	DeleteDC(memDC);
-
-	s_charWidth = metrics.tmAveCharWidth;
+	
+	s_charWidth = metrics.tmMaxCharWidth;
 	s_lineHeight = metrics.tmHeight;
 }
 
@@ -115,11 +117,11 @@ void CodePreview::Unregister()
 		s_normalFont = 0;
 	}
 
-	if(s_boldFont)
+	/*if(s_boldFont)
 	{
 		DeleteObject(s_boldFont);
 		s_boldFont = 0;
-	}
+	}/**/
 }
 
 void CodePreview::Create(HWND parent, int width, int height)
@@ -143,7 +145,7 @@ struct PreviewRenderOp : RenderOperator
 	void EndLine(int line, int lastColumn, unsigned int /*lineFlags*/, bool textEnd)
 	{
 		if(lastColumn < m_lineWidth)
-			m_text[line*m_lineWidth + lastColumn].format = CodePreview::FormatType_EOL;
+			m_text[line*m_lineWidth + lastColumn].format = CodePreview::FT_EOL;
 
 		if(!textEnd)
 			m_text.resize((line + 2) * m_lineWidth);
@@ -153,7 +155,7 @@ struct PreviewRenderOp : RenderOperator
 	{
 		for(int i = column; (i < column + count) && (i < m_lineWidth); ++i)
 		{
-			m_text[line*m_lineWidth + i].format = CodePreview::FormatType_Plain;
+			m_text[line*m_lineWidth + i].format = CodePreview::FT_character; //FormatType_Plain;
 			m_text[line*m_lineWidth + i].chr = L' ';
 		}
 	}
@@ -164,14 +166,16 @@ struct PreviewRenderOp : RenderOperator
 			return;
 
 		unsigned char format;
-		if(flags & TextFlag_Highlight)
-			format = CodePreview::FormatType_Highlight;
-		else if(flags & TextFlag_Comment)
-			format = CodePreview::FormatType_Comment;
-		else if(flags & TextFlag_Keyword)
-			format = CodePreview::FormatType_Keyword;
-		else
-			format = CodePreview::FormatType_Plain;
+		unsigned int color;
+		if (flags & TextFlag_Highlight)		format = CodePreview::FT_match;
+		else if (flags & TextFlag_Comment)	format = CodePreview::FT_comment;
+		else if (flags & TextFlag_Keyword)	format = CodePreview::FT_keyword;
+		else if (flags & TextFlag_String)	format = CodePreview::FT_string;
+		else if (flags & TextFlag_Preproc)	format = CodePreview::FT_preproc;
+		else if (chr >= 'A' && chr <= 'Z')	format = CodePreview::FT_upperCase;
+		else if (chr >= 'a' && chr <= 'z')	format = CodePreview::FT_character;
+		else if (chr >= '0' && chr <= '9')	format = CodePreview::FT_number;
+		else  format = CodePreview::FT_operator;
 
 		m_text[line*m_lineWidth + column].format = format;
 		m_text[line*m_lineWidth + column].chr = chr;
@@ -242,23 +246,20 @@ void CodePreview::FlushTextBuf(std::vector<wchar_t>& buf, unsigned char format, 
 		return;
 
 	HFONT font = s_normalFont;
-	unsigned int fgColor = MetalBar::s_codePreviewFg;
+	unsigned int fgColor = MetalBar::s_characterColor;  // = MetalBar::s_keywordColor;
 	unsigned int bgColor = MetalBar::s_codePreviewBg;
 
 	switch(format)
 	{
-		case FormatType_Plain:
-			break;
-		case FormatType_Comment:
-			fgColor = MetalBar::s_commentColor;
-			break;
-		case FormatType_Highlight:
-			bgColor = MetalBar::s_codePreviewFg;
-			fgColor = MetalBar::s_codePreviewBg;
-			break;
-		case FormatType_Keyword:
-			font = s_boldFont;
-			break;
+		case FT_match:		fgColor = MetalBar::s_matchColor;	break;
+		case FT_comment:	fgColor = MetalBar::s_commentColor;	break;
+		case FT_keyword:	fgColor = MetalBar::s_keywordColor;	break;
+		case FT_string:		fgColor = MetalBar::s_stringColor;	break;
+		case FT_preproc:	fgColor = MetalBar::s_preprocColor;	break;
+		case FT_upperCase:	fgColor = MetalBar::s_upperCaseColor;	break;
+		case FT_character:	fgColor = MetalBar::s_characterColor;	break;
+		case FT_number:		fgColor = MetalBar::s_numberColor;		break;
+		case FT_operator:	fgColor = MetalBar::s_operatorColor;	break;
 	}
 
 	SetBkColor(m_paintDC, RGB_TO_COLORREF(bgColor));
@@ -275,9 +276,9 @@ void CodePreview::Update(int y, int line)
 {
 	// Clear the back buffer and draw a border.
 	RECT r = { 0, 0, m_wndWidth, m_wndHeight };
-	StrokeRect(m_paintDC, MetalBar::s_codePreviewFg, r);
-	r.left = 1; r.right -= 1;
-	r.top = 1; r.bottom -= 1;
+	//StrokeRect(m_paintDC, MetalBar::s_commentColor/*s_codePreviewFg*/, r);
+	/*r.left = 1; /*r.right -= 1;  // no border
+	r.top = 1; r.bottom -= 1;*/
 	FillSolidRect(m_paintDC, MetalBar::s_codePreviewBg, r);
 
 	// Draw the text with buffering, because calling ExtTextOut() at each character is way too slow.
@@ -297,17 +298,17 @@ void CodePreview::Update(int y, int line)
 	{
 		int textX = HORIZ_MARGIN / 2;
 
-		unsigned char currentFormat = FormatType_Plain;
+		unsigned char currentFormat = FT_character; //-
 		int bufX = textX;
 
 		for(int col = 0; col < charsPerLine; ++col, textX += s_charWidth)
 		{
 			const CharInfo& info = m_text[line*charsPerLine + col];
-			if(info.format == FormatType_EOL)
+			if(info.format == FT_EOL)
 				break;
 
 			// Spaces can be merged with whatever format is currently active, except for highlight.
-			if( (info.chr == L' ') && (currentFormat != FormatType_Highlight) )
+			if( (info.chr == L' ') && (currentFormat != FT_match) )
 			{
 				txtBuf.push_back(L' ');
 				continue;
