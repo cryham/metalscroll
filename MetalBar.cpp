@@ -674,6 +674,22 @@ void MetalBar::RefreshCodeImg(int barHeight)
 			PaintLineFlags(bmpBits, imgLine, m_codeImgHeight, mli[i].second, bookmlev);
 	}
 	
+	///  Find highlights
+	int len = m_highlightWord.Length();
+	for (int i = 0; i < m_highlights.size(); i++)
+	{
+		int col = m_highlights[i].column + MARG_L +1;
+		int imgLine = int(lineScaleFactor * m_highlights[i].line);
+		// Flip BMP
+		imgLine = m_codeImgHeight - imgLine - 1;
+
+		int xmax = s_barWidth -MARG_R -1;
+		int y1 = std::max(0, imgLine), y2 = std::min(m_codeImgHeight, imgLine + (int)s_FindSize);
+		if (y1 < y2 && col+2 < xmax)  //+
+		for(int y = y1; y < y2; ++y)  // +2
+			for(int x = col; x < std::min(xmax, col + len); ++x)
+				bmpBits[y*s_barWidth + x] = s_matchColor;
+	}
 
 	if(!m_imgDC)
 		m_imgDC = CreateCompatibleDC(0);
@@ -1024,19 +1040,24 @@ void MetalBar::HighlightMatchingWords()
 			continue;
 		}
 
-		bool isFound = false;
-		if (MetalBar::s_caseSensitive)
-			isFound = (wcsncmp(chr, m_highlightWord, selTextLen) == 0);
+		///  find math options +
+		bool found = false, whole = true;
+
+		if (s_bFindWhole)
+			whole = (chr == allText || IsCppIdSeparator(chr[-1])) && IsCppIdSeparator(chr[selTextLen]);
+
+		if (s_bFindCase)
+			found = wcsncmp(chr, m_highlightWord, selTextLen) == 0;
 		else
-			isFound = (_wcsnicmp(chr, m_highlightWord, selTextLen) == 0);
+			found = wcsnicmp(chr, m_highlightWord, selTextLen) == 0;
 
-		bool isValidWord = true;
-		if (MetalBar::s_wholeWordOnly)
-			isValidWord = (chr == allText || IsCppIdSeparator(chr[-1])) && IsCppIdSeparator(chr[selTextLen]);
-
-		if( isFound && isValidWord )
+		if (found && whole)
 		{
 			buffer->CreateLineMarker(g_highlightMarkerType, line, column, line, column + selTextLen, 0, 0);
+
+			/// + add highlight for internal use
+			m_highlights.push_back(stFindHighlight(column, line));
+			
 			// Make sure we don't create overlapping markers.
 			chr += selTextLen - 1;
 			column += selTextLen - 1;
