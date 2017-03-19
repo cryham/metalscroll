@@ -57,7 +57,7 @@ STDMETHODIMP CEditCmdFilter::Exec(const GUID* cmdGroup, DWORD cmdID, DWORD cmdex
 		{
 			case ECMD_DOUBLECLICK:
 			{
-				if(MetalBar::s_requireAltForHighlight)
+				if(MetalBar::s_requireAlt)
 				{
 					DWORD state = GetAsyncKeyState(VK_MENU);
 					if(!(state & 80000000))

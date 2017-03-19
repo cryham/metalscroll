@@ -106,6 +106,13 @@ private:
 	void							HighlightMatchingWords();
 	void							RemoveWordHighlight(IVsTextLines* buffer);
 
+	struct stFindHighlight
+	{
+		int column, line;	// poses of find result
+		stFindHighlight(int x,int y):column(x),line(y) {}
+	};
+	std::vector<stFindHighlight>	m_highlights;
+
 	void							PaintLineFlags(unsigned int* img, int line, int imgHeight, unsigned int flags, int bookmlev);
 	void							RefreshCodeImg(int barHeight);
 

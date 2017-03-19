@@ -24,30 +24,21 @@
 #include "TextFormatting.h"
 
 #define REFRESH_CODE_TIMER_ID		1
-#define REFRESH_CODE_INTERVAL		2000
+#define REFRESH_CODE_INTERVAL		1000  // 1s, was 2000 ms
 
 extern HWND							g_mainVSHwnd;
 extern long							g_highlightMarkerType;
 
-unsigned int MetalBar::s_barWidth;
-unsigned int MetalBar::s_whitespaceColor;
-unsigned int MetalBar::s_upperCaseColor;
-unsigned int MetalBar::s_characterColor;
-unsigned int MetalBar::s_commentColor;
-unsigned int MetalBar::s_cursorColor;
-unsigned int MetalBar::s_matchColor;
-unsigned int MetalBar::s_modifiedLineColor;
-unsigned int MetalBar::s_unsavedLineColor;
-unsigned int MetalBar::s_breakpointColor;
-unsigned int MetalBar::s_bookmarkColor;
-unsigned int MetalBar::s_requireAltForHighlight;
-unsigned int MetalBar::s_caseSensitive;
-unsigned int MetalBar::s_wholeWordOnly;
-unsigned int MetalBar::s_codePreviewBg;
-unsigned int MetalBar::s_codePreviewFg;
-unsigned int MetalBar::s_codePreviewWidth;
-unsigned int MetalBar::s_codePreviewHeight;
-unsigned int MetalBar::s_enabled;
+
+//  static vars
+unsigned int MetalBar::s_barWidth, MetalBar::s_whitespaceColor, MetalBar::s_upperCaseColor, MetalBar::s_characterColor,
+	MetalBar::s_numberColor, MetalBar::s_operatorColor, MetalBar::s_stringColor, MetalBar::s_preprocColor,
+	MetalBar::s_commentColor, MetalBar::s_cursorColor, MetalBar::s_frameColor,
+	MetalBar::s_matchColor, MetalBar::s_modifiedLineColor, MetalBar::s_unsavedLineColor,
+	MetalBar::s_breakpointColor, MetalBar::s_bookmarkColor, MetalBar::s_bookmarkDarkColor, MetalBar::s_bookmarkSize, MetalBar::s_bookmarkClrT[BOOKM_LEVELS],
+	MetalBar::s_requireAlt, MetalBar::s_bFindCase, MetalBar::s_bFindWhole, MetalBar::s_FindSize, MetalBar::s_FindSize2,
+	MetalBar::s_codePreviewBg, MetalBar::s_keywordColor, MetalBar::s_PrvWidth, MetalBar::s_PrvHeight,
+	MetalBar::s_PrvFontSize, MetalBar::s_topSplit, MetalBar::s_enabled = 1;
 
 std::set<MetalBar*> MetalBar::s_bars;
 
@@ -58,24 +49,14 @@ MetalBar::MetalBar(ScrollbarHandles& handles, IVsTextView* view)
 {
 	m_handles = handles;
 
-	m_view = view;
-	m_view->AddRef();
+	m_view = view;	m_view->AddRef();
 	m_numLines = 0;
 
-	m_codeImg = 0;
-	m_codeImgHeight = 0;
-	m_codeImgDirty = true;
-	m_imgDC = 0;
-	m_backBufferImg = 0;
-	m_backBufferDC = 0;
-	m_backBufferBits = 0;
-	m_backBufferWidth = 0;
-	m_backBufferHeight = 0;
+	m_codeImg = 0;	m_codeImgHeight = 0;	m_codeImgDirty = true;	m_imgDC = 0;
+	m_backBufferImg = 0;	m_backBufferDC = 0;		m_backBufferBits = 0;
+	m_backBufferWidth = 0;	m_backBufferHeight = 0;
 
-	m_pageSize = 1;
-	m_scrollPos = 0;
-	m_scrollMin = 0;
-	m_scrollMax = 1;
+	m_pageSize = 1;	m_scrollPos = 0;	m_scrollMin = 0;	m_scrollMax = 1;
 	m_dragging = false;
 
 	m_editCmdFilter = CEditCmdFilter::AttachFilter(this);
@@ -425,6 +406,10 @@ LRESULT MetalBar::WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		}
 
 		case WM_LBUTTONDBLCLK:
+			return 0;
+		
+		//case WM_LBUTTONDBLCLK:
+		case WM_RBUTTONDOWN:  //+
 		{
 			OptionsDialog dlg;
 			dlg.Execute();
@@ -501,37 +486,56 @@ bool MetalBar::GetBufferAndText(IVsTextLines** buffer, BSTR* text, long* numLine
 	return SUCCEEDED(hr) && (*text);
 }
 
-void MetalBar::PaintLineFlags(unsigned int* img, int line, int imgHeight, unsigned int flags)
-{
-	int startLine = std::max(0, line - 2);
-	int endLine = std::min(imgHeight, line + 3);
 
-	// Left margin flags.
+///  Markers
+
+void MetalBar::PaintLineFlags(unsigned int* img, int line, int imgHeight, unsigned int flags, int bookmlev)
+{
+	unsigned int color;
+	int xofs = 1, xw = (int)s_barWidth;
+
+	// Left margin flags
 	if( (flags & LineFlag_ChangedUnsaved) || (flags & LineFlag_ChangedSaved) )
 	{
-		unsigned int color = (flags & LineFlag_ChangedUnsaved) ? s_unsavedLineColor : s_modifiedLineColor;
-		for(int i = startLine; i < endLine; ++i)
+		color = (flags & LineFlag_ChangedUnsaved) ? s_unsavedLineColor : s_modifiedLineColor;
+		int y1 = std::max(0, line - 0), y2 = std::min(imgHeight, line + 1);
+		for(int y = y1; y < y2; ++y)
 		{
-			for(int j = 0; j < 3; ++j)
-				img[i*s_barWidth + j] = color;
+			for(int x = 0; x < 3; ++x)
+				img[y*xw + x] = color;
 		}
 	}
-
-	// Right margin flags.
-	unsigned int color;
-	if(flags & LineFlag_Match)
-		color = s_matchColor;
-	else if(flags & LineFlag_Breakpoint)
-		color = s_breakpointColor;
-	else if(flags & LineFlag_Bookmark)
-		color = s_bookmarkColor;
-	else
-		return;
-
-	for(int i = startLine; i < endLine; ++i)
+	if(flags & LineFlag_Breakpoint)
 	{
-		for(int j = s_barWidth - 5; j < (int)s_barWidth; ++j)
-			img[i*s_barWidth + j] = color;
+		color = s_breakpointColor;
+		xofs = MARG_L-3 +1;
+		for(int y = std::max(0, line - 1); y < std::min(imgHeight, line + 2); ++y)
+			for(int x = xofs; x < xofs + 3; ++x)
+				img[y*xw + x] = color;
+	}
+
+	// Right margin flags
+	if(flags & LineFlag_Match)
+	{
+		color = s_matchColor;
+		xofs = MARG_R +1;  int yofs = ((int)s_FindSize2) /2;
+		int y1 = std::max(0, line -yofs), y2 = std::min(imgHeight, line -yofs + (int)s_FindSize2);  //+1
+		for(int y = y1; y < y2; ++y)
+			for(int x = xw - xofs; x < xw - xofs + 3; ++x)
+				img[y*xw + x] = color;
+	}
+	if(flags & LineFlag_Bookmark)
+	{
+		//color = s_bookmarkColor;
+		color = s_bookmarkClrT[std::min(BOOKM_LEVELS-1, std::max(0, (int)bookmlev-1))];
+		bookmlev += s_bookmarkSize;
+		int lev2 = bookmlev/2/**/-1, xb1 = std::max(3, bookmlev + 2) -1;
+		int y1 = std::max(0, line -lev2), y2 = std::min(imgHeight, line -lev2 + bookmlev);
+		//int y1 = std::max(0, line -bookmlev), y2 = std::min(imgHeight, line -bookmlev+lev2 + 1);
+
+		for(int y = y1; y < y2; ++y)
+			for(int x = xw - xb1-1; x < xw-1; ++x)
+				img[y*xw + x] = color;
 	}
 }
 
@@ -551,7 +555,13 @@ struct BarRenderOp : public RenderOperator
 	void EndLine(int line, int lastColumn, unsigned int lineFlags, bool textEnd)
 	{
 		// Fill the remaining pixels with the whitespace color.
-		for(int i = lastColumn; i < (int)MetalBar::s_barWidth; ++i)
+		for(int i = lastColumn; i < (int)MetalBar::s_barWidth-MARG_L-MARG_R; ++i)
+			imgBuffer[line*MetalBar::s_barWidth + i + MARG_L] = MetalBar::s_whitespaceColor;
+
+		// margins
+		for(int i = 0; i < MARG_L; ++i)
+			imgBuffer[line*MetalBar::s_barWidth + i] = MetalBar::s_whitespaceColor;
+		for(int i = (int)MetalBar::s_barWidth-MARG_R; i < (int)MetalBar::s_barWidth; ++i)
 			imgBuffer[line*MetalBar::s_barWidth + i] = MetalBar::s_whitespaceColor;
 
 		if(lineFlags)
@@ -566,32 +576,35 @@ struct BarRenderOp : public RenderOperator
 
 	void RenderSpaces(int line, int column, int count)
 	{
-		for(int i = column; (i < column + count) && (i < (int)MetalBar::s_barWidth); ++i)
-			imgBuffer[line*MetalBar::s_barWidth + i] = MetalBar::s_whitespaceColor;
+		for(int i = column; (i < column + count) && (i < (int)MetalBar::s_barWidth -MARG_L-MARG_R); ++i)
+			imgBuffer[line*MetalBar::s_barWidth + i + MARG_L] = MetalBar::s_whitespaceColor;
 	}
 
 	void RenderCharacter(int line, int column, wchar_t chr, unsigned int flags)
 	{
-		if(column >= (int)MetalBar::s_barWidth)
+		if(column >= (int)MetalBar::s_barWidth -MARG_L-MARG_R)  //-0 (5+8)  **
 			return;
 
-		unsigned int color;
-		if(flags & TextFlag_Highlight)
-			color = MetalBar::s_matchColor;
-		else if(flags & TextFlag_Comment)
-			color = MetalBar::s_commentColor;
-		else if( (chr >= 'A') && (chr <= 'Z') )
-			color = MetalBar::s_upperCaseColor;
-		else
-			color = MetalBar::s_characterColor;
+		unsigned int color = MetalBar::s_characterColor;
+		if (flags & TextFlag_Highlight)		color = MetalBar::s_matchColor;
+		else if (flags & TextFlag_Comment)	color = MetalBar::s_commentColor;
+		else if (flags & TextFlag_Keyword)	color = MetalBar::s_keywordColor;
+		else if (flags & TextFlag_String)	color = MetalBar::s_stringColor;
+		else if (flags & TextFlag_Preproc)	color = MetalBar::s_preprocColor;
+		else if (chr >= 'A' && chr <= 'Z')	color = MetalBar::s_upperCaseColor;
+		else if (chr >= 'a' && chr <= 'z')	color = MetalBar::s_characterColor;
+		else if (chr >= '0' && chr <= '9')	color = MetalBar::s_numberColor;
+		else  color = MetalBar::s_operatorColor;
 
-		imgBuffer[line*MetalBar::s_barWidth + column] = color;
+		imgBuffer[line*MetalBar::s_barWidth + column + MARG_L] = color;  //+0  **
 	}
 
 	std::vector<unsigned int>& imgBuffer;
 	MarkedLineList& markedLines;
 };
 
+//  Draw Code  ++
+//------------------------------------------------------------------------------------------------------------------
 void MetalBar::RefreshCodeImg(int barHeight)
 {
 	// Get the text buffer.
@@ -603,8 +616,8 @@ void MetalBar::RefreshCodeImg(int barHeight)
 
 	// Paint the code representation.
 	std::vector<unsigned int> imgBuffer;
-	BarRenderOp::MarkedLineList markedLines;
-	BarRenderOp renderOp(imgBuffer, markedLines);
+	BarRenderOp::MarkedLineList mli;//markedLines;
+	BarRenderOp renderOp(imgBuffer, mli);
 	m_numLines = RenderText(renderOp, m_view, buffer, text, numLines);
 	m_codeImgHeight = m_numLines < barHeight ? m_numLines : barHeight;
 
@@ -615,11 +628,8 @@ void MetalBar::RefreshCodeImg(int barHeight)
 	BITMAPINFO bi;
 	memset(&bi, 0, sizeof(bi));
 	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
-	bi.bmiHeader.biWidth = s_barWidth;
-	bi.bmiHeader.biHeight = m_codeImgHeight;
-	bi.bmiHeader.biPlanes = 1;
-	bi.bmiHeader.biBitCount = 32;
-	bi.bmiHeader.biCompression = BI_RGB;
+	bi.bmiHeader.biWidth = s_barWidth;	bi.bmiHeader.biHeight = m_codeImgHeight;
+	bi.bmiHeader.biPlanes = 1;	bi.bmiHeader.biBitCount = 32;	bi.bmiHeader.biCompression = BI_RGB;
 	unsigned int* bmpBits = 0;
 	m_codeImg = CreateDIBSection(0, &bi, DIB_RGB_COLORS, (void**)&bmpBits, 0, 0);
 
@@ -636,25 +646,34 @@ void MetalBar::RefreshCodeImg(int barHeight)
 			line1 += s_barWidth;
 			line2 -= s_barWidth;
 		}
-	}
-	else
-	{
-		lineScaleFactor = 1.0f * barHeight / m_numLines;
-		// Scale.
+	}else{
+		lineScaleFactor = 1.0f * barHeight / m_numLines;	// Scale
 		FlipScaleImageVertically(bmpBits, barHeight, &imgBuffer[0], m_numLines, s_barWidth);
 	}
 
-	// Paint the line flags directly on the final image, which might have been scaled. By doing it in
-	// a separate pass (instead of painting the markers while generating the code image) we get rid of
-	// a bunch of complications and we make sure that the size of the markers stays fixed regardless
-	// of image scaling.
-	for(int i = 0; i < (int)markedLines.size(); ++i)
+	// Paint the line flags directly on the final image, which might have been scaled.
+	
+	/// Markers
+	
+	int si = (int)mli.size();
+	for(int i = 0; i < si; ++i)
 	{
-		int imgLine = int(lineScaleFactor * markedLines[i].first);
+		int line = mli[i].first;
+		int imgLine = int(lineScaleFactor * line);
+		
+		//  bookmark level  1-4  +
+		int bookmlev = 1;
+		if (i+1 < si)  if ((mli[i+1].second & LineFlag_Bookmark) && mli[i+1].first == line+1)  bookmlev = 0;  else
+		if (i-1 >= 0)  if ((mli[i-1].second & LineFlag_Bookmark) && mli[i-1].first == line-1)  {	++bookmlev;
+		if (i-2 >= 0)  if ((mli[i-2].second & LineFlag_Bookmark) && mli[i-2].first == line-2)  {	++bookmlev;
+		if (i-3 >= 0)  if ((mli[i-3].second & LineFlag_Bookmark) && mli[i-3].first == line-3)  ++bookmlev;	}	}
+
 		// Flip it, since BMPs are upside down.
 		imgLine = m_codeImgHeight - imgLine - 1;
-		PaintLineFlags(bmpBits, imgLine, m_codeImgHeight, markedLines[i].second);
+		if (bookmlev > 0)
+			PaintLineFlags(bmpBits, imgLine, m_codeImgHeight, mli[i].second, bookmlev);
 	}
+	
 
 	if(!m_imgDC)
 		m_imgDC = CreateCompatibleDC(0);
@@ -720,7 +739,7 @@ void MetalBar::OnPaint(HDC ctrlDC)
 	float normFact = (m_numLines < barHeight) ? 1.0f : 1.0f * barHeight / range;
 	int normalizedCursor = int(cursor * normFact);
 	int normalizedPage = int(m_pageSize * normFact);
-	normalizedPage = std::max(15, normalizedPage);
+	normalizedPage = std::max(/*15*/5, normalizedPage);	// par min cur
 	if(normalizedPage > barHeight)
 		normalizedPage = barHeight;
 	if(clRect.top + normalizedCursor + normalizedPage > clRect.bottom)
@@ -745,33 +764,62 @@ void MetalBar::OnPaint(HDC ctrlDC)
 			pixel[i] = (p <= 255) ? (unsigned char)p : 255;
 		}
 	}
+	// cursor frame |
+	if (s_frameColor != s_cursorColor)
+	{
+		unsigned int* pEnd = (unsigned int*)(m_backBufferBits + (barHeight - normalizedCursor) * s_barWidth);
+		unsigned int* pPixel = pEnd - normalizedPage * s_barWidth;
+		for(; pPixel < pEnd; pPixel += s_barWidth)
+		{
+			*pPixel = s_frameColor;
+			*(pPixel + s_barWidth-1) = s_frameColor;
+		}
+	}
 
 	// Blit the backbuffer onto the control.
 	BitBlt(ctrlDC, clRect.left, clRect.top, s_barWidth, barHeight, m_backBufferDC, 0, 0, SRCCOPY);
 }
 
+//  Default settings
+//------------------------------------------------------------------------------------------------------------------
 void MetalBar::ResetSettings()
 {
 	s_barWidth = 64;
-	s_whitespaceColor = 0xfff5f5f5;
-	s_upperCaseColor = 0xff101010;
-	s_characterColor = 0xff808080;
-	s_commentColor = 0xff008000;
-	s_cursorColor = 0xe0000028;
-	s_matchColor = 0xffff8000;
-	s_modifiedLineColor = 0xff0000ff;
-	s_unsavedLineColor = 0xffe1621e;
-	s_breakpointColor = 0xffff0000;
-	s_bookmarkColor = 0xff0000ff;
-	s_requireAltForHighlight = TRUE;
-	s_caseSensitive = TRUE;
-	s_wholeWordOnly = TRUE;
-	s_codePreviewBg = 0xffffffe1;
-	s_codePreviewFg = 0xff000000;
-	s_codePreviewWidth = 80;
-	s_codePreviewHeight = 15;
-	s_enabled = TRUE;
+	s_whitespaceColor = 0xfff5f5f5;	s_upperCaseColor = 0xff101010;	s_characterColor = 0xff808080;
+	s_numberColor = 0x0ff808080;	s_operatorColor = 0xff404040;	s_stringColor = 0xff606060;		s_preprocColor = 0xffC0C0C0;
+	s_commentColor = 0xff008000;	s_cursorColor = 0xe0000028;		s_frameColor = 0xff000000;
+	s_matchColor = 0xffff8000;	s_modifiedLineColor = 0xff0000ff;	s_unsavedLineColor = 0xffe1621e;
+	s_breakpointColor = 0xffff0000;	s_bookmarkColor = 0xff0000ff;	s_bookmarkDarkColor = 0xff000080;	s_bookmarkSize = 1;
+	s_requireAlt = TRUE;	s_bFindCase = false;	s_bFindWhole = false;	s_FindSize = 2;  s_FindSize2 = 2;
+	s_codePreviewBg = 0xffffffe1;	s_keywordColor = 0xff000000;	s_PrvWidth = 80;	s_PrvHeight = 15;
+	s_PrvFontSize = 12;		s_topSplit = 0;
+	UpdBookmClrT();
 }
+
+void MetalBar::UpdBookmClrT()
+{
+	int clrB1[3] =
+	{
+		s_bookmarkColor & 0xff,
+		(s_bookmarkColor >> 8) & 0xff,
+		(s_bookmarkColor >> 16) & 0xff
+	};
+	int clrB2[3] =
+	{
+		s_bookmarkDarkColor & 0xff,
+		(s_bookmarkDarkColor >> 8) & 0xff,
+		(s_bookmarkDarkColor >> 16) & 0xff
+	};
+	for (int i=0; i < BOOKM_LEVELS; i++)
+	{
+		float f = float(i)/float(BOOKM_LEVELS-1);
+		s_bookmarkClrT[i] = 0xff000000
+			+ ( (int)(clrB1[0] + (float)(clrB2[0] - clrB1[0]) * f) )
+			+ ( (int)(clrB1[1] + (float)(clrB2[1] - clrB1[1]) * f) ) *256
+			+ ( (int)(clrB1[2] + (float)(clrB2[2] - clrB1[2]) * f) ) *256*256;
+}
+}
+
 
 bool MetalBar::ReadRegInt(unsigned int* to, HKEY key, const char* name)
 {
@@ -788,6 +836,8 @@ bool MetalBar::ReadRegInt(unsigned int* to, HKEY key, const char* name)
 	return true;
 }
 
+//  Load settings
+//------------------------------------------------------------------------------------------------------------------
 void MetalBar::ReadSettings()
 {
 	// Make sure we have sane defaults, in case stuff is missing.
@@ -801,21 +851,38 @@ void MetalBar::ReadSettings()
 	ReadRegInt(&s_whitespaceColor, key, "WhitespaceColor");
 	ReadRegInt(&s_upperCaseColor, key, "UpperCaseColor");
 	ReadRegInt(&s_characterColor, key, "OtherCharColor");
+
+	ReadRegInt(&s_numberColor,	key, "NumberColor");
+	ReadRegInt(&s_operatorColor,key, "OperatorColor");
+	ReadRegInt(&s_stringColor,	key, "StringColor");
+	ReadRegInt(&s_preprocColor,	key, "PreprocColor");
+
 	ReadRegInt(&s_commentColor, key, "CommentColor");
 	ReadRegInt(&s_cursorColor, key, "CursorColor");
+	ReadRegInt(&s_frameColor,	key, "CursorFrameColor");
+	
 	ReadRegInt(&s_matchColor, key, "MatchedWordColor");
 	ReadRegInt(&s_modifiedLineColor, key, "ModifiedLineColor");
 	ReadRegInt(&s_unsavedLineColor, key, "UnsavedLineColor");
+	
 	ReadRegInt(&s_breakpointColor, key, "BreakpointColor");
 	ReadRegInt(&s_bookmarkColor, key, "BookmarkColor");
-	ReadRegInt(&s_requireAltForHighlight, key, "RequireALT");
-	ReadRegInt(&s_caseSensitive, key, "CaseSensitive");
-	ReadRegInt(&s_wholeWordOnly, key, "WholeWordOnly");
-	ReadRegInt(&s_codePreviewFg, key, "CodePreviewFg");
+	ReadRegInt(&s_bookmarkDarkColor,key, "BookmarkDarkColor");
+	ReadRegInt(&s_bookmarkSize,		key, "BookmarkSize");	UpdBookmClrT();
+	
+	ReadRegInt(&s_requireAlt,	key, "RequireALT");
+	ReadRegInt(&s_bFindCase,	key, "FindCaseSensitive");
+	ReadRegInt(&s_bFindWhole,	key, "FindWholeWord");
+	ReadRegInt(&s_FindSize,		key, "FindSize");
+	ReadRegInt(&s_FindSize2,	key, "FindSize2");
+	
 	ReadRegInt(&s_codePreviewBg, key, "CodePreviewBg");
-	ReadRegInt(&s_codePreviewWidth, key, "CodePreviewWidth");
-	ReadRegInt(&s_codePreviewHeight, key, "CodePreviewHeight");
-	ReadRegInt(&s_enabled, key, "BarEnabled");
+	ReadRegInt(&s_keywordColor,	key, "KeywordColor");
+	ReadRegInt(&s_PrvWidth,		key, "CodePreviewWidth");
+	ReadRegInt(&s_PrvHeight,	key, "CodePreviewHeight");
+
+	ReadRegInt(&s_PrvFontSize,	key, "PreviewFontHeight");  //,REG_SZ
+	ReadRegInt(&s_topSplit,		key, "TopSplitterHeight");
 
 	RegCloseKey(key);
 }
@@ -825,6 +892,8 @@ void MetalBar::WriteRegInt(HKEY key, const char* name, unsigned int val)
 	RegSetValueExA(key, name, 0, REG_DWORD, (LPBYTE)&val, sizeof(val));
 }
 
+//  Save settings
+//------------------------------------------------------------------------------------------------------------------
 void MetalBar::SaveSettings()
 {
 	HKEY key;
@@ -835,21 +904,39 @@ void MetalBar::SaveSettings()
 	WriteRegInt(key, "WhitespaceColor", s_whitespaceColor);
 	WriteRegInt(key, "UpperCaseColor", s_upperCaseColor);
 	WriteRegInt(key, "OtherCharColor", s_characterColor);
+
+	WriteRegInt(key, "NumberColor",		s_numberColor);
+	WriteRegInt(key, "OperatorColor",	s_operatorColor);
+	WriteRegInt(key, "StringColor",		s_stringColor);
+	WriteRegInt(key, "PreprocColor",	s_preprocColor);
+
 	WriteRegInt(key, "CommentColor", s_commentColor);
 	WriteRegInt(key, "CursorColor", s_cursorColor);
+	 WriteRegInt(key, "CursorFrameColor",s_frameColor);
+
 	WriteRegInt(key, "MatchedWordColor", s_matchColor);
 	WriteRegInt(key, "ModifiedLineColor", s_modifiedLineColor);
 	WriteRegInt(key, "UnsavedLineColor", s_unsavedLineColor);
+	
 	WriteRegInt(key, "BreakpointColor", s_breakpointColor);
 	WriteRegInt(key, "BookmarkColor", s_bookmarkColor);
-	WriteRegInt(key, "RequireALT", s_requireAltForHighlight);
-	WriteRegInt(key, "CaseSensitive", s_caseSensitive);
-	WriteRegInt(key, "WholeWordOnly", s_wholeWordOnly);
-	WriteRegInt(key, "CodePreviewFg", s_codePreviewFg);
+	WriteRegInt(key, "BookmarkDarkColor",	s_bookmarkDarkColor);
+	 WriteRegInt(key, "BookmarkSize",		s_bookmarkSize);
+	 
+	WriteRegInt(key, "RequireALT",			s_requireAlt);
+	WriteRegInt(key, "FindCaseSensitive",	s_bFindCase);
+	 WriteRegInt(key, "FindWholeWord",		s_bFindWhole);
+	 WriteRegInt(key, "FindSize",			s_FindSize);
+	 WriteRegInt(key, "FindSize2",			s_FindSize2);
+	 
 	WriteRegInt(key, "CodePreviewBg", s_codePreviewBg);
-	WriteRegInt(key, "CodePreviewWidth", s_codePreviewWidth);
-	WriteRegInt(key, "CodePreviewHeight", s_codePreviewHeight);
+	WriteRegInt(key, "KeywordColor",		s_keywordColor);
+	WriteRegInt(key, "CodePreviewWidth",	s_PrvWidth);
+	 WriteRegInt(key, "CodePreviewHeight",	s_PrvHeight);
 
+	 WriteRegInt(key, "PreviewFontHeight",	s_PrvFontSize);
+	 WriteRegInt(key, "TopSplitterHeight",	s_topSplit);
+	  
 	RegCloseKey(key);
 
 	// Refresh all the scrollbars.
@@ -862,11 +949,14 @@ void MetalBar::SaveSettings()
 	}
 
 	// Resize the code preview window.
-	g_codePreviewWnd.Resize(s_codePreviewWidth, s_codePreviewHeight);
+	g_codePreviewWnd.Resize(s_PrvWidth, s_PrvHeight);
 }
 
+//  HighLights
+//------------------------------------------------------------------------------------------------------------------
 void MetalBar::RemoveWordHighlight(IVsTextLines* buffer)
 {
+	m_highlights.clear();
 	struct DeleteMarkerOp : public MarkerOperator
 	{
 		void Process(IVsTextLineMarker* marker, int /*idx*/) const
@@ -964,7 +1054,7 @@ void MetalBar::Init()
 	CodePreview::Register();
 	OptionsDialog::Init();
 
-	g_codePreviewWnd.Create(g_mainVSHwnd, s_codePreviewWidth, s_codePreviewHeight);
+	g_codePreviewWnd.Create(g_mainVSHwnd, s_PrvWidth, s_PrvHeight);
 }
 
 void MetalBar::Uninit()
